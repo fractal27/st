@@ -1,5 +1,6 @@
 /* See LICENSE for license details. */
 #include <errno.h>
+#include <pthread.h>
 #include <math.h>
 #include <limits.h>
 #include <locale.h>
@@ -1541,10 +1542,39 @@ xdrawglyph(Glyph g, int x, int y)
 	xdrawglyphfontspecs(&spec, g, numspecs, x, y);
 }
 
+/* simple thread timer to post an Expose after ~16ms to drive animation frames */
+struct anim_arg { Display *dpy; Window winid; };
+static void *anim_thread(void *p) {
+       struct anim_arg *a = p;
+       struct timespec ts = {.tv_nsec= 16666666};
+       nanosleep(&ts, NULL);
+       XEvent ev;
+       memset(&ev, 0, sizeof(ev));
+       ev.type = Expose;
+       ev.xexpose.window = a->winid;
+       XSendEvent(a->dpy, a->winid, False, ExposureMask, &ev);
+       XFlush(a->dpy);
+       free(p);
+       return NULL;
+}
+
+
 void
 xdrawcursor(int cx, int cy, Glyph g, int ox, int oy, Glyph og)
 {
 	Color drawcol;
+    static double anim_start_x = 0.0;
+    static double anim_target_x = 0.0;
+    static struct timespec anim_start_ts = {0,0};
+    static double anim_duration = 0.14; /* seconds; tune as desired */
+
+    double now;
+    {
+           struct timespec ts;
+           clock_gettime(CLOCK_MONOTONIC, &ts);
+           now = ts.tv_sec + ts.tv_nsec * 1e-9;
+    }
+
 
 	/* remove the old cursor */
 	if (selected(ox, oy))
@@ -1579,52 +1609,99 @@ xdrawcursor(int cx, int cy, Glyph g, int ox, int oy, Glyph og)
 		}
 		drawcol = dc.col[g.bg];
 	}
+    /* ANIMATION: start new animation if logical cursor column changed */
+    if (anim_target_x != (double)cx) {
+         /* first-run guard: avoid jump */
+         if (anim_start_x == 0.0 && anim_target_x == 0.0) {
+              anim_start_x = cx;
+         } else {
+              /* if previous animation in-flight, compute current interpolated pos */
+              double prev_start = anim_start_x;
+              double prev_target = anim_target_x;
+              double prev_start_time = anim_start_ts.tv_sec + anim_start_ts.tv_nsec * 1e-9;
+              double prev_elapsed = now - prev_start_time;
+              double prev_u = anim_duration > 0.0 ? (prev_elapsed / anim_duration) : 1.0;
+              if (prev_u < 0.0) prev_u = 0.0;
+              if (prev_u > 1.0) prev_u = 1.0;
+              if (prev_u > 0.0 && prev_u < 1.0)
+                   anim_start_x = prev_start + (prev_target - prev_start) * prev_u;
+              else anim_start_x = prev_target;
+         }
+         anim_target_x = cx;
+         clock_gettime(CLOCK_MONOTONIC, &anim_start_ts);
+    }
 
-	/* draw the new one */
-	if (IS_SET(MODE_FOCUSED)) {
-		switch (win.cursor) {
-		case 7: /* st extension */
-			g.u = 0x2603; /* snowman (U+2603) */
-			/* FALLTHROUGH */
-		case 0: /* Blinking Block */
-		case 1: /* Blinking Block (Default) */
-		case 2: /* Steady Block */
-			xdrawglyph(g, cx, cy);
-			break;
-		case 3: /* Blinking Underline */
-		case 4: /* Steady Underline */
-			XftDrawRect(xw.draw, &drawcol,
-					borderpx + cx * win.cw,
-					borderpx + (cy + 1) * win.ch - \
-						cursorthickness,
-					win.cw, cursorthickness);
-			break;
-		case 5: /* Blinking bar */
-		case 6: /* Steady bar */
-			XftDrawRect(xw.draw, &drawcol,
-					borderpx + cx * win.cw,
-					borderpx + cy * win.ch,
-					cursorthickness, win.ch);
-			break;
-		}
-	} else {
-		XftDrawRect(xw.draw, &drawcol,
-				borderpx + cx * win.cw,
-				borderpx + cy * win.ch,
-				win.cw - 1, 1);
-		XftDrawRect(xw.draw, &drawcol,
-				borderpx + cx * win.cw,
-				borderpx + cy * win.ch,
-				1, win.ch - 1);
-		XftDrawRect(xw.draw, &drawcol,
-				borderpx + (cx + 1) * win.cw - 1,
-				borderpx + cy * win.ch,
-				1, win.ch - 1);
-		XftDrawRect(xw.draw, &drawcol,
-				borderpx + cx * win.cw,
-				borderpx + (cy + 1) * win.ch - 1,
-				win.cw, 1);
-	}
+    /* compute interpolated column (use smoothstep for nicer feel) */
+    double start_time = anim_start_ts.tv_sec + anim_start_ts.tv_nsec * 1e-9;
+    double elapsed = now - start_time;
+    double u = anim_duration > 0.0 ? (elapsed / anim_duration) : 1.0;
+    if (u < 0.0){
+           u = 0.0;
+    } else if (u > 1.0){
+           u = 1.0;
+    } else {
+           struct anim_arg *a = malloc(sizeof(*a));
+           if (!a) return;
+           a->dpy = xw.dpy;
+           a->winid = xw.win;
+           pthread_t t;
+           pthread_create(&t, NULL, anim_thread, a);
+           pthread_detach(t);
+    }
+    /* smoothstep easing */
+    u = u * u * (3.0 - 2.0 * u);
+    double cur_x = anim_start_x + (anim_target_x - anim_start_x) * u;
+
+    /* convert column to pixel X origin */
+    int draw_cx = (int)round(cur_x);
+    int px = borderpx + draw_cx * win.cw;
+    int py = borderpx + cy * win.ch;
+
+    // printf("winmode: 0x%X\n",win.mode & ~MODE_FOCUSED);
+    /* draw the new one */
+    if (IS_SET(MODE_FOCUSED)) {
+          switch (win.cursor) {
+          case 7: /* st extension */
+                 g.u = 0x2603; /* snowman (U+2603) */
+                 /* FALLTHROUGH */
+          case 0: /* Blinking Block */
+          case 1: /* Blinking Block (Default) */
+          case 2: /* Steady Block */
+                 xdrawglyph(g, draw_cx, cy);
+                 break;
+          case 3: /* Blinking Underline */
+          case 4: /* Steady Underline */
+                 XftDrawRect(xw.draw, &drawcol,
+                               px,
+                               borderpx + (cy + 1) * win.ch - cursorthickness,
+                               win.cw, cursorthickness);
+                 break;
+          case 5: /* Blinking bar */
+          case 6: /* Steady bar */
+                 XftDrawRect(xw.draw, &drawcol,
+                               px,
+                               py,
+                               cursorthickness, win.ch);
+                 break;
+          }
+   } else {
+          XftDrawRect(xw.draw, &drawcol,
+                      px,
+                      py,
+                      win.cw - 1, 1);
+          XftDrawRect(xw.draw, &drawcol,
+                      px,
+                      py,
+                      1, win.ch - 1);
+          XftDrawRect(xw.draw, &drawcol,
+                      borderpx + (draw_cx + 1) * win.cw - 1,
+                      py,
+                      1, win.ch - 1);
+          XftDrawRect(xw.draw, &drawcol,
+                      px,
+                      borderpx + cy * win.ch + win.ch - 1,
+                      win.cw, 1);
+    }
 }
 
 void
