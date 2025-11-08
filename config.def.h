@@ -5,10 +5,9 @@
  *
  * font: see http://freedesktop.org/software/fontconfig/fontconfig-user.html
  */
-//static char *font = "monospace:style=regular:size=15"; // Hack Nerd Font Mono:style=Regular
-//static char *font = "Iosevka Nerd Font Mono,Iosevka NFM:style=Regular:size=15"; // Hack Nerd Font Mono:style=Regular
-static char *font = "Inconsolata LGC Nerd Font Mono:style=Regular:size=15"; // Hack Nerd Font Mono:style=Regular
-
+static char *font = "IosevkaTerm Nerd Font Mono,Iosevka NFM:style=Regular:size=15"; // Hack Nerd Font Mono:style=Regular
+// static char *font = "Inconsolata LGC Nerd Font Mono:style=Regular:size=15"; // Hack Nerd Font Mono:style=Regular
+// static const char* font = "Hack Nerd Mono:size=14"; 
 //Iosevka Nerd Font Mono,Iosevka NFM:style=Regular
 //Inconsolata LGC Nerd Font Mono:style=Regular
 static int borderpx = 3;
@@ -99,34 +98,31 @@ char *termname = "st-256color";
 unsigned int tabspaces = 8;
 
 /* Terminal colors (16 first used in escape sequence) */
+
 static const char *colorname[] = {
-	/* 8 normal colors */
-	"black",
-	"red3",
-	"green3",
-	"yellow3",
-	"blue2",
-	"magenta3",
-	"cyan3",
-	"gray90",
-
-	/* 8 bright colors */
-	"gray50",
-	"red",
-	"green",
-	"yellow",
-	"#5c5cff",
-	"magenta",
-	"cyan",
-	"white",
-
-	[255] = 0,
-
-	/* more colors can be added after 255 to use with DefaultXX */
-	"#cccccc",
-	"#555555",
-	"#ffffff", /* default foreground colour */
-	"#131313", /* default background colour */
+  "#0b0f14", // 0 normal black
+  "#ff5c57", // 1 red
+  "#5af78e", // 2 green
+  "#f3f99d", // 3 yellow
+  "#57c7ff", // 4 blue
+  "#ff6ac1", // 5 magenta
+  "#9aedfe", // 6 cyan
+  "#e6eef6", // 7 white
+  "#666c75", // 8 bright black
+  "#ff7b78", // 9 bright red
+  "#9ef7b8", //10 bright green
+  "#fff5b1", //11 bright yellow
+  "#82d4ff", //12 bright blue
+  "#ff9edb", //13 bright magenta
+  "#c7f2ff", //14 bright cyan
+  "#ffffff", //15 bright white
+  [255] = 0,
+  
+  /* more colors can be added after 255 to use with DefaultXX */
+  "#cccccc",
+  "#555555",
+  "#ffffff", /* default foreground colour */
+  "#000000", /* default background colour */
 };
 
 
@@ -135,7 +131,7 @@ static const char *colorname[] = {
  * foreground, background, cursor, reverse cursor
  */
 unsigned int defaultfg = 258;
-unsigned int defaultbg = 259;
+unsigned int defaultbg = 000;
 unsigned int defaultcs = 256;
 static unsigned int defaultrcs = 257;
 
@@ -203,7 +199,7 @@ static Shortcut shortcuts[] = {
 	{ XK_ANY_MOD,           XK_Print,       printsel,       {.i =  0} },
 	{ ControlMask,          XK_plus,       zoom,           {.f = +1} },
 	{ ControlMask,          XK_minus,        zoom,           {.f = -1} },
-	{ TERMMOD,              XK_Home,        zoomreset,      {.f =  0} },
+	{ TERMMOD,              XK_semicolon,        zoomreset,      {.f =  0} },
 	{ TERMMOD,              XK_C,           clipcopy,       {.i =  0} },
 	{ ShiftMask,            XK_Page_Up,     kscrollup,      {.i = -1} },
 	{ ShiftMask,            XK_Page_Down,   kscrolldown,    {.i = -1} },

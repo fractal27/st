@@ -1546,7 +1546,7 @@ xdrawglyph(Glyph g, int x, int y)
 struct anim_arg { Display *dpy; Window winid; };
 static void *anim_thread(void *p) {
        struct anim_arg *a = p;
-       struct timespec ts = {.tv_nsec= 16666666};
+       struct timespec ts = {.tv_nsec= 140e6};
        nanosleep(&ts, NULL);
        XEvent ev;
        memset(&ev, 0, sizeof(ev));

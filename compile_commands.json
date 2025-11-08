@@ -1,0 +1,38 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-std=c99",
+      "-I/usr/X11R6/include",
+      "-I/usr/include/freetype2",
+      "-I/usr/include/libpng16",
+      "-I/usr/include/freetype2",
+      "-I/usr/include/libpng16",
+      "-DVERSION=\"0.9.3\"",
+      "-D_XOPEN_SOURCE=600",
+      "-O1",
+      "-c",
+      "st.c"
+    ],
+    "directory": "/home/anon/repos/st",
+    "file": "/home/anon/repos/st/st.c"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-std=c99",
+      "-I/usr/X11R6/include",
+      "-I/usr/include/freetype2",
+      "-I/usr/include/libpng16",
+      "-I/usr/include/freetype2",
+      "-I/usr/include/libpng16",
+      "-DVERSION=\"0.9.3\"",
+      "-D_XOPEN_SOURCE=600",
+      "-O1",
+      "-c",
+      "x.c"
+    ],
+    "directory": "/home/anon/repos/st",
+    "file": "/home/anon/repos/st/x.c"
+  }
+]
