@@ -1546,10 +1546,9 @@ xdrawglyph(Glyph g, int x, int y)
 struct anim_arg { Display *dpy; Window winid; };
 static void *anim_thread(void *p) {
        struct anim_arg *a = p;
-       struct timespec ts = {.tv_nsec= 140e6};
+       struct timespec ts = {.tv_nsec = ANIM_DURATION_MS*1e6};
        nanosleep(&ts, NULL);
-       XEvent ev;
-       memset(&ev, 0, sizeof(ev));
+       XEvent ev = {};
        ev.type = Expose;
        ev.xexpose.window = a->winid;
        XSendEvent(a->dpy, a->winid, False, ExposureMask, &ev);
@@ -1566,7 +1565,7 @@ xdrawcursor(int cx, int cy, Glyph g, int ox, int oy, Glyph og)
     static double anim_start_x = 0.0;
     static double anim_target_x = 0.0;
     static struct timespec anim_start_ts = {0,0};
-    static double anim_duration = 0.14; /* seconds; tune as desired */
+    static double anim_duration = (double)ANIM_DURATION_MS/1000; /* seconds; tune as desired */
 
     double now;
     {

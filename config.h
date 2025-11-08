@@ -174,6 +174,12 @@ static unsigned int defaultattr = 11;
  */
 static uint forcemousemod = ShiftMask;
 
+/* Animation for interpolation (change betweeen mouse positions)
+ * this needs to be a macro because static variables need to be compile-time  
+ */
+
+#define ANIM_DURATION_MS 120
+
 /*
  * Internal mouse shortcuts.
  * Beware that overloading Button1 will disable the selection.
