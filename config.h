@@ -178,7 +178,7 @@ static uint forcemousemod = ShiftMask;
  * this needs to be a macro because static variables need to be compile-time  
  */
 
-#define ANIM_DURATION_MS 90
+#define ANIM_DURATION_MS 80
 
 /*
  * Internal mouse shortcuts.
