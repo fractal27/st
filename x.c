@@ -1575,10 +1575,6 @@ xdrawcursor(int cx, int cy, Glyph g, int ox, int oy, Glyph og)
     }
 
 
-	/* remove the old cursor */
-	if (selected(ox, oy))
-		og.mode ^= ATTR_REVERSE;
-	xdrawglyph(og, ox, oy);
 
 	if (IS_SET(MODE_HIDE))
 		return;
@@ -1587,7 +1583,7 @@ xdrawcursor(int cx, int cy, Glyph g, int ox, int oy, Glyph og)
 	 * Select the right color for the right mode.
 	 */
 	g.mode &= ATTR_BOLD|ATTR_ITALIC|ATTR_UNDERLINE|ATTR_STRUCK|ATTR_WIDE;
-
+   
 	if (IS_SET(MODE_REVERSE)) {
 		g.mode |= ATTR_REVERSE;
 		g.bg = defaultfg;
@@ -1608,6 +1604,7 @@ xdrawcursor(int cx, int cy, Glyph g, int ox, int oy, Glyph og)
 		}
 		drawcol = dc.col[g.bg];
 	}
+
     /* ANIMATION: start new animation if logical cursor column changed */
     if (anim_target_x != (double)cx) {
          /* first-run guard: avoid jump */
@@ -1628,12 +1625,19 @@ xdrawcursor(int cx, int cy, Glyph g, int ox, int oy, Glyph og)
          }
          anim_target_x = cx;
          clock_gettime(CLOCK_MONOTONIC, &anim_start_ts);
+
+         xdrawline(getline(oy), MIN(ox,cx), oy, MAX(ox,cx));
+    } else {
+           if(selected(ox, oy))
+                  og.mode ^= ATTR_REVERSE;
+           xdrawglyph(og, ox, oy);
     }
 
     /* compute interpolated column (use smoothstep for nicer feel) */
     double start_time = anim_start_ts.tv_sec + anim_start_ts.tv_nsec * 1e-9;
     double elapsed = now - start_time;
     double u = anim_duration > 0.0 ? (elapsed / anim_duration) : 1.0;
+
     if (u < 0.0){
            u = 0.0;
     } else if (u > 1.0){
@@ -1650,6 +1654,7 @@ xdrawcursor(int cx, int cy, Glyph g, int ox, int oy, Glyph og)
     /* smoothstep easing */
     u = u * u * (3.0 - 2.0 * u);
     double cur_x = anim_start_x + (anim_target_x - anim_start_x) * u;
+
 
     /* convert column to pixel X origin */
     int draw_cx = (int)round(cur_x);

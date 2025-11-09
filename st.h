@@ -112,6 +112,7 @@ size_t utf8encode(Rune, char *);
 void *xmalloc(size_t);
 void *xrealloc(void *, size_t);
 char *xstrdup(const char *);
+Line getline(int);  // external api for getting a line.
 
 /* config.h globals */
 extern char *utmp;

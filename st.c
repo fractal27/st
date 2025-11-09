@@ -2717,6 +2717,10 @@ tresize(int col, int row)
 	term.c = c;
 }
 
+Line getline(int y){
+       return TLINE(y);
+}
+
 void
 resettitle(void)
 {
