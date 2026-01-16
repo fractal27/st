@@ -2263,6 +2263,7 @@ tstrsequence(uchar c)
 void
 tcontrolcode(uchar ascii)
 {
+	// printf("controlcode: %02X\n",ascii);
 	switch (ascii) {
 	case '\t':   /* HT */
 		tputtab(1);
@@ -2343,7 +2344,12 @@ tcontrolcode(uchar ascii)
 	case 0x9a:   /* DECID -- Identify Terminal */
 		ttywrite(vtiden, strlen(vtiden), 0);
 		break;
-	case 0x9b:   /* TODO: CSI */
+	case 0x9b:	/* CSI */
+		csireset();
+		term.esc &= ~(ESC_CSI|ESC_ALTCHARSET|ESC_TEST);
+		term.esc |= ESC_START;
+		term.esc |= ESC_CSI;
+		return;
 	case 0x9c:   /* TODO: ST */
 		break;
 	case 0x90:   /* DCS -- Device Control String */
@@ -2473,6 +2479,8 @@ tputc(Rune u)
 	 * character.
 	 */
 	if (term.esc & ESC_STR) {
+		/*if( u == '0x9b')
+			printf("[%s] there it is, 0x9b!\n",__FUNCTION__);*/
 		if (u == '\a' || u == 030 || u == 032 || u == 033 ||
 		   ISCONTROLC1(u)) {
 			term.esc &= ~(ESC_START|ESC_STR);

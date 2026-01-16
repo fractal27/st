@@ -5,7 +5,7 @@
  *
  * font: see http://freedesktop.org/software/fontconfig/fontconfig-user.html
  */
-static char *font = "Iosevka Nerd Font Mono,Iosevka NFM:style=Regular:size=15"; // Hack Nerd Font Mono:style=Regular
+static char *font = "IosevkaTerm Nerd Font Mono,Iosevka NFM:style=Regular:size=15"; // Hack Nerd Font Mono:style=Regular
 // static char *font = "Inconsolata LGC Nerd Font Mono:style=Regular:size=15"; // Hack Nerd Font Mono:style=Regular
 // static const char* font = "Hack Nerd Mono:size=14"; 
 //Iosevka Nerd Font Mono,Iosevka NFM:style=Regular
@@ -173,12 +173,6 @@ static unsigned int defaultattr = 11;
  * modifier, set to 0 to not use it.
  */
 static uint forcemousemod = ShiftMask;
-
-/* Animation for interpolation (change betweeen mouse positions)
- * this needs to be a macro because static variables need to be compile-time  
- */
-
-#define ANIM_DURATION_MS 140
 
 /*
  * Internal mouse shortcuts.
